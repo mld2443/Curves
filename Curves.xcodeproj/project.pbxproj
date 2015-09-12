@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		C946D5571BA48A820034D90F /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C946D5561BA48A820034D90F /* main.cpp */; };
+		C946D55F1BA48AC30034D90F /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C946D55E1BA48AC30034D90F /* GLUT.framework */; };
+		C946D5611BA48ADF0034D90F /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C946D5601BA48ADF0034D90F /* OpenGL.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +27,9 @@
 /* Begin PBXFileReference section */
 		C946D5531BA48A820034D90F /* Curves */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Curves; sourceTree = BUILT_PRODUCTS_DIR; };
 		C946D5561BA48A820034D90F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		C946D55D1BA48AAA0034D90F /* Point.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Point.h; sourceTree = "<group>"; };
+		C946D55E1BA48AC30034D90F /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
+		C946D5601BA48ADF0034D90F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +37,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C946D5611BA48ADF0034D90F /* OpenGL.framework in Frameworks */,
+				C946D55F1BA48AC30034D90F /* GLUT.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,6 +48,8 @@
 		C946D54A1BA48A820034D90F = {
 			isa = PBXGroup;
 			children = (
+				C946D5601BA48ADF0034D90F /* OpenGL.framework */,
+				C946D55E1BA48AC30034D90F /* GLUT.framework */,
 				C946D5551BA48A820034D90F /* Curves */,
 				C946D5541BA48A820034D90F /* Products */,
 			);
@@ -58,6 +67,7 @@
 			isa = PBXGroup;
 			children = (
 				C946D5561BA48A820034D90F /* main.cpp */,
+				C946D55D1BA48AAA0034D90F /* Point.h */,
 			);
 			path = Curves;
 			sourceTree = "<group>";
@@ -205,6 +215,7 @@
 		C946D55B1BA48A820034D90F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -212,6 +223,7 @@
 		C946D55C1BA48A820034D90F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
