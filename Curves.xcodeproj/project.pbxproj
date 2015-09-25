@@ -30,6 +30,7 @@
 		C946D55D1BA48AAA0034D90F /* Point.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Point.h; sourceTree = "<group>"; };
 		C946D55E1BA48AC30034D90F /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		C946D5601BA48ADF0034D90F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		C95C71C21BB4AE9400634D6A /* curve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = curve.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +69,7 @@
 			children = (
 				C946D5561BA48A820034D90F /* main.cpp */,
 				C946D55D1BA48AAA0034D90F /* Point.h */,
+				C95C71C21BB4AE9400634D6A /* curve.h */,
 			);
 			path = Curves;
 			sourceTree = "<group>";
@@ -247,6 +249,7 @@
 				C946D55C1BA48A820034D90F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
