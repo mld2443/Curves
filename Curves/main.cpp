@@ -10,10 +10,12 @@
 
 int mouseX = -1, mouseY = -1;
 bool mouseLeftDown = false, mouseRightDown = false, mouseMiddleDown = false;
+
 bool editmode = true, drawcurve = false;
 Point* movepoint;
 
 curve* cgen;
+int degree = 1;
 
 using namespace std;
 
@@ -121,39 +123,44 @@ void key(unsigned char c, int x, int y) {
         case 'e':
             editmode = false;
             drawcurve = false;
-            printf("display mode");
+            printf("display mode\n");
             break;
             
         case '1':
             if (!editmode) {
                 drawcurve = true;
-                //cgen = new lagrange();
+                cgen = new lagrange();
+                printf("LaGrange curve, degree %u\n", degree);
             }
             break;
             
         case '2':
             if (!editmode) {
                 drawcurve = true;
-                //cgen = new bezier();
+                cgen = new bezier();
+                printf("Bezier curve, degree %u\n", degree);
             }
             break;
             
         case '3':
             if (!editmode) {
                 drawcurve = true;
-                //cgen = new bspline();
-            }
+                cgen = new bspline();
+                printf("B-spline curve, degree %u\n", degree);
+           }
             break;
             
         case '4':
             if (!editmode) {
                 drawcurve = true;
-                //cgen = new catmullrom();
+                cgen = new catmullrom();
+                degree = 0;
+                printf("Catmull-Rom curve, smoothness %u\n", degree);
             }
             break;
             
         default:
-            printf("unmapped key %c hit\n", c);
+            //printf("unmapped key %c hit\n", c);
             break;
     }
 }
