@@ -9,7 +9,7 @@ using namespace std;
 class curve {
 public:
     virtual vector<vector<Point>>& generate(const vector<Point> pts, const int degree)=0;
-    virtual vector<pair<int, int>> find_intersections(void) { return vector<pair<int, int>>(); }
+    virtual vector<Point> find_intersections(void) { return vector<Point>(); }
 
 protected:
     vector<vector<Point>> curves;
@@ -36,8 +36,8 @@ public:
         return curves;
     }
     
-    vector<pair<int, int>> find_intersections(void){
-        vector<pair<int, int>> results = vector<pair<int, int>>();
+    vector<Point> find_intersections(void){
+        vector<Point> results = vector<Point>();
         //TODO: intersections
         return results;
     }

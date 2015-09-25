@@ -37,9 +37,8 @@ void display(void) {
     }
     
     // draw the control points
-    for(int i = 0; i < pts.size(); i++) {
-        pts[i].draw(0, 0, 1);
-    }
+    for(vector<Point>::iterator it = pts.begin(); it != pts.end(); it++)
+        it->draw(0, 0, 1);
     
     glFlush();
     glutSwapBuffers();
