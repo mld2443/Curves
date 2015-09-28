@@ -61,9 +61,13 @@ public:
         x += dx;
         y += dy;
     }
+    
+    float abs(void) {
+        return sqrt(x * x + y * y);
+    }
 
 	void normalize(void) {
-		float len = sqrt(x * x + y * y);
+		float len = abs();
 		x /= len;
 		y /= len;
 	}

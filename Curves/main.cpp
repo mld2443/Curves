@@ -29,7 +29,7 @@ void display(void) {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     
     // draw the curves
-    if (drawcurve && !mouseLeftDown) {
+    if (drawcurve) {
         crvs = cgen->generate(cpts);
         glColor3f(1.0, 0.0, 0.0);
         for (vector<vector<Point>>::iterator crv = crvs.begin(); crv != crvs.end(); crv++) {
@@ -181,17 +181,51 @@ void key(unsigned char c, int x, int y) {
             }
             break;
             
+        case '7':
+            if (drawcurve) {
+                cgen->set_uniform_param();
+                printf("Set uniform parameterization, a = 0.0\n");
+                glutPostRedisplay();
+            }
+            break;
+            
+        case '8':
+            if (drawcurve) {
+                cgen->set_centrip_param();
+                printf("Set uniform parameterization, a = 0.5\n");
+                glutPostRedisplay();
+            }
+            break;
+            
+        case '9':
+            if (drawcurve) {
+                cgen->set_chordlen_param();
+                printf("Set uniform parameterization, a = 1.0\n");
+                glutPostRedisplay();
+            }
+            break;
+            
+        case '0':
+            if (drawcurve) {
+                cgen->set_unusual_param();
+                printf("Set uniform parameterization, a = 2.0\n");
+                glutPostRedisplay();
+            }
+            break;
+            
         case '=':
             if (drawcurve) {
                 cgen->degree_inc();
                 printf("increase degree to %u\n", cgen->get_degree());
-            }
+                glutPostRedisplay();
+           }
             break;
             
         case '-':
             if (drawcurve) {
                 cgen->degree_dec();
                 printf("decrease degree to %u\n", cgen->get_degree());
+                glutPostRedisplay();
             }
             break;
             

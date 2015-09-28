@@ -8,6 +8,7 @@ public:
     bezier(const int d = 1, const float f = 1.0/100.0) {
         degree = d;
         fidelity = f;
+        parameterization = 0.0;
         curves = vector<vector<Point>>();
     }
     

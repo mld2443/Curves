@@ -1,6 +1,7 @@
 #ifndef lagrange_h
 #define lagrange_h
 
+#include <math.h>
 #include "curve.h"
 
 class lagrange : public curve {
@@ -8,27 +9,24 @@ public:
     lagrange(const int d = 1, const float f = 1.0/100.0) {
         degree = d;
         fidelity = f;
+        parameterization = 0.0;
         curves = vector<vector<Point>>();
     }
     
     vector<vector<Point>>& generate(const vector<Point> cpts) {
-        vector<float> t_int;
-        for (int i = 0; i < cpts.size(); i++)
-            t_int.push_back((float)i);
+        curves.clear();
         
-        unsigned int piece = 0;
-        for (unsigned int segment = 0; segment < cpts.size() ; segment++) {
-            vector<Point> curve = vector<Point>();
+        for (unsigned int segment = 0; segment + degree < cpts.size(); segment += (degree + 1)) {
+            vector<Point> curve, segment_cpts = vector<Point>(cpts.begin() + segment, cpts.end() + segment + degree);
             
-            for (float t = t_int[segment]; t < t_int[segment + 1]; t += fidelity) {
-                curve.push_back(nevilles(degree, 0, cpts, t_int, t));
+            vector<float> t_int = generate_ints(segment_cpts, parameterization);
+            
+            float step = (t_int[degree] / (float)degree) * fidelity;
+            for (float t = t_int[0]; t < t_int[degree]; t += step) {
+                curve.push_back(interpolate(degree, 0, segment_cpts, t_int, t));
             }
             
-            if (++piece == degree) {
-                curves.push_back(curve);
-                segment++;
-                piece = 0;
-            }
+            curves.push_back(curve);
         }
         return curves;
     }
