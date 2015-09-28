@@ -192,7 +192,7 @@ void key(unsigned char c, int x, int y) {
         case '8':
             if (drawcurve) {
                 cgen->set_centrip_param();
-                printf("Set uniform parameterization, a = 0.5\n");
+                printf("Set centripital parameterization, a = 0.5\n");
                 glutPostRedisplay();
             }
             break;
@@ -200,7 +200,7 @@ void key(unsigned char c, int x, int y) {
         case '9':
             if (drawcurve) {
                 cgen->set_chordlen_param();
-                printf("Set uniform parameterization, a = 1.0\n");
+                printf("Set chord length parameterization, a = 1.0\n");
                 glutPostRedisplay();
             }
             break;
@@ -208,7 +208,7 @@ void key(unsigned char c, int x, int y) {
         case '0':
             if (drawcurve) {
                 cgen->set_unusual_param();
-                printf("Set uniform parameterization, a = 2.0\n");
+                printf("Set unusual parameterization, a = 2.0\n");
                 glutPostRedisplay();
             }
             break;

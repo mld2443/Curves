@@ -17,14 +17,15 @@ public:
         curves.clear();
         
         for (unsigned int segment = 0; segment + degree < cpts.size(); segment += (degree + 1)) {
-            vector<Point> curve, segment_cpts = vector<Point>(cpts.begin() + segment, cpts.end() + segment + degree);
+            vector<Point> curve, segment_cpts = vector<Point>(cpts.begin() + segment, cpts.begin() + segment + degree + 1);
             
             vector<float> t_int = generate_ints(segment_cpts, parameterization);
             
             float step = (t_int[degree] / (float)degree) * fidelity;
-            for (float t = t_int[0]; t < t_int[degree]; t += step) {
+            for (float t = t_int[0]; t <= t_int[degree]; t += step) {
                 curve.push_back(interpolate(degree, 0, segment_cpts, t_int, t));
             }
+            curve.push_back(segment_cpts.back());
             
             curves.push_back(curve);
         }
