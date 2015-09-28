@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "Point.h"
-#include "curve.h"
+#include "lagrange.h"
+#include "bezier.h"
+#include "bspline.h"
+#include "catmullrom.h"
 #include <vector>
 
 int mouseX = -1, mouseY = -1;
@@ -15,11 +17,11 @@ bool editmode = true, drawcurve = false;
 Point* movepoint;
 
 curve* cgen;
-int degree = 1;
+//int degree = 1;
 
 using namespace std;
 
-vector<Point> pts;
+vector<Point> cpts;
 vector<vector<Point>> crvs;
 
 
@@ -27,7 +29,9 @@ void display(void) {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     
     // draw the curves
-    if (drawcurve) {
+    if (drawcurve && !mouseLeftDown) {
+        crvs = cgen->generate(cpts);
+        glColor3f(1.0, 0.0, 0.0);
         for (vector<vector<Point>>::iterator crv = crvs.begin(); crv != crvs.end(); crv++) {
             glBegin(GL_LINE_STRIP);
             for (vector<Point>::iterator pt = crv->begin(); pt != crv->end(); pt++)
@@ -37,7 +41,7 @@ void display(void) {
     }
     
     // draw the control points
-    for(vector<Point>::iterator it = pts.begin(); it != pts.end(); it++)
+    for(vector<Point>::iterator it = cpts.begin(); it != cpts.end(); it++)
         it->draw(0, 0, 1);
     
     glFlush();
@@ -70,11 +74,11 @@ void mouse(int button, int state, int x, int y) {
         case GLUT_LEFT_BUTTON:
             mouseLeftDown = state == GLUT_DOWN;
             if(editmode && mouseLeftDown) {
-                pts.push_back(Point(x, y));
+                cpts.push_back(Point(x, y));
                 glutPostRedisplay();
             }
             else if (mouseLeftDown) {
-                for (vector<Point>::iterator it = pts.begin(); it != pts.end(); it++) {
+                for (vector<Point>::iterator it = cpts.begin(); it != cpts.end(); it++) {
                     if (it->clicked(x, y))
                         movepoint = &(*it);
                 }
@@ -128,33 +132,66 @@ void key(unsigned char c, int x, int y) {
         case '1':
             if (!editmode) {
                 drawcurve = true;
+                
+                if (cgen != nullptr)
+                    free(cgen);
                 cgen = new lagrange();
-                printf("LaGrange curve, degree %u\n", degree);
+                
+                printf("LaGrange curve, degree %u\n", cgen->get_degree());
+                glutPostRedisplay();
             }
             break;
             
         case '2':
             if (!editmode) {
                 drawcurve = true;
+                
+                if (cgen != nullptr)
+                    free(cgen);
                 cgen = new bezier();
-                printf("Bezier curve, degree %u\n", degree);
+                
+                printf("Bezier curve, degree %u\n", cgen->get_degree());
+                //glutPostRedisplay();
             }
             break;
             
         case '3':
             if (!editmode) {
                 drawcurve = true;
+                
+                if (cgen != nullptr)
+                    free(cgen);
                 cgen = new bspline();
-                printf("B-spline curve, degree %u\n", degree);
+                
+                printf("B-spline curve, degree %u\n", cgen->get_degree());
+                //glutPostRedisplay();
            }
             break;
             
         case '4':
             if (!editmode) {
                 drawcurve = true;
+                
+                if (cgen != nullptr)
+                    free(cgen);
                 cgen = new catmullrom();
-                degree = 0;
-                printf("Catmull-Rom curve, smoothness %u\n", degree);
+                
+                printf("Catmull-Rom curve, smoothness %u\n", cgen->get_degree());
+                //glutPostRedisplay();
+            }
+            break;
+            
+        case '=':
+            if (drawcurve) {
+                cgen->degree_inc();
+                printf("increase degree to %u\n", cgen->get_degree());
+            }
+            break;
+            
+        case '-':
+            if (drawcurve) {
+                cgen->degree_dec();
+                printf("decrease degree to %u\n", cgen->get_degree());
             }
             break;
             
@@ -165,6 +202,7 @@ void key(unsigned char c, int x, int y) {
 }
 
 int main(int argc, char** argv) {
+    
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGB);
     glutInitWindowSize(500, 500);

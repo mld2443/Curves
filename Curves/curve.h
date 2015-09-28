@@ -3,70 +3,35 @@
 
 #include <vector>
 #include <utility>
+#include "Point.h"
+//#include <map>
 
 using namespace std;
 
 class curve {
 public:
-    virtual vector<vector<Point>>& generate(const vector<Point> pts, const int degree)=0;
+    virtual vector<vector<Point>>& generate(const vector<Point> cpts)=0;
     virtual vector<Point> find_intersections(void) { return vector<Point>(); }
+    void degree_inc() { degree++; };
+    void degree_dec() { if (degree - 1) degree--; };
+    unsigned int get_degree() const { return degree; };
+    
+//private:
+    // hash map for later
+    
 
 protected:
     vector<vector<Point>> curves;
+    unsigned int degree;
+    float fidelity;
     
-    //TODO: add shared interpolation and bspline stuff
-};
-
-class lagrange : public curve {
-public:
-    lagrange() { curves = vector<vector<Point>>(); }
-    
-    vector<vector<Point>>& generate(const vector<Point> pts, const int degree) {
-        //TODO: all of this
-        return curves;
-    }
-};
-
-class bezier : public curve {
-public:
-    bezier() { curves = vector<vector<Point>>(); }
-    
-    vector<vector<Point>>& generate(const vector<Point> pts, const int degree) {
-        //TODO: all of this
-        return curves;
-    }
-    
-    vector<Point> find_intersections(void){
-        vector<Point> results = vector<Point>();
-        //TODO: intersections
-        return results;
-    }
-    
-private:
-    pair<Point, Point> bounding_box(const vector<Point> c) {
-        pair<Point, Point> box = pair<Point, Point>();
-        //TODO: compute bounding box
-        return box;
-    }
-};
-
-class bspline : public curve {
-public:
-    bspline() { curves = vector<vector<Point>>(); }
-    
-    vector<vector<Point>>& generate(const vector<Point> pts, const int degree) {
-        //TODO: all of this
-        return curves;
-    }
-};
-
-class catmullrom : public curve {
-public:
-    catmullrom() { curves = vector<vector<Point>>(); }
-    
-    vector<vector<Point>>& generate(const vector<Point> pts, const int degree) {
-        //TODO: all of this
-        return curves;
+    static Point nevilles(const unsigned int d, const unsigned int begin, const vector<Point> cp, const vector<float> t_int, const float t) {
+        if (d == 0)
+            return cp[begin];
+        
+        return ((nevilles(d - 1, begin, cp, t_int, t) * (d - t)) +   \
+                (nevilles(d - 1, begin + 1, cp, t_int, t) * t)) /      \
+                (t_int[begin + d] - t_int[begin]);
     }
 };
 
