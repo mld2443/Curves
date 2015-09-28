@@ -74,8 +74,8 @@
 				C946D5561BA48A820034D90F /* main.cpp */,
 				C946D55D1BA48AAA0034D90F /* Point.h */,
 				C95C71C21BB4AE9400634D6A /* curve.h */,
-				C95C71C41BB8DE7700634D6A /* bezier.h */,
 				C95C71C31BB8DE1B00634D6A /* lagrange.h */,
+				C95C71C41BB8DE7700634D6A /* bezier.h */,
 				C95C71C51BB8DEBE00634D6A /* bspline.h */,
 				C95C71C61BB8DF2800634D6A /* catmullrom.h */,
 			);

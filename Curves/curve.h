@@ -32,14 +32,15 @@ private:
             return control_points[begin];
         
         // check if this bit has been calculated before
-        map<pair<unsigned int, unsigned int>,Point>::iterator ii = hash.find(pair<unsigned int, unsigned int>(d, begin));
+        auto p = pair<unsigned int, unsigned int>(d, begin);
+        auto ii = hash.find(p);
         
         // if it has, don't recalculate it!
         if (ii != hash.end())
             return ii->second;
         
         // otherwise, yeah go ahead and calculate it
-        return hash[pair<unsigned int, unsigned int>(d, begin)] =                               \
+        return hash[p] = \
                 ((nevilles(d - 1, begin, control_points, t_int, t) * (t_int[begin + d] - t))  + \
                  (nevilles(d - 1, begin + 1, control_points, t_int, t) * (t - t_int[begin]))) / \
                  (t_int[begin + d] - t_int[begin]);
@@ -49,13 +50,13 @@ private:
         if (d == 0)
             return cp[begin];
         
-        map<pair<unsigned int, unsigned int>,Point>::iterator ii = hash.find(pair<unsigned int, unsigned int>(d, begin));
+        auto p = pair<unsigned int, unsigned int>(d, begin);
+        auto ii = hash.find(p);
         
         if (ii != hash.end())
             return ii->second;
         
-        return hash[pair<unsigned int, unsigned int>(d, begin)] = \
-            (bezier_pyramid(d - 1, begin, cp, t) * (1.0 - t)) + (bezier_pyramid(d - 1, begin + 1, cp, t) * t);
+        return hash[p] = (bezier_pyramid(d - 1, begin, cp, t) * (1.0 - t)) + (bezier_pyramid(d - 1, begin + 1, cp, t) * t);
     }
 
 protected:
@@ -86,7 +87,7 @@ protected:
     // the hash so there are no erronious recalls
     Point interpolate(const vector<Point>& control_points, const vector<float>& t_int, const float t) {
         hash = map<pair<unsigned int, unsigned int>,Point>();
-        Point p = nevilles(degree, 0, control_points, t_int, t);
+        auto p = nevilles(degree, 0, control_points, t_int, t);
         hash.clear();
         return p;
     }
@@ -94,7 +95,7 @@ protected:
     // same for bezier curves
     Point bezier_pyramid(const vector<Point>& control_points, const float t) {
         hash = map<pair<unsigned int, unsigned int>,Point>();
-        Point p = bezier_pyramid(degree, 0, control_points, t);
+        auto p = bezier_pyramid(degree, 0, control_points, t);
         hash.clear();
         return p;
     }

@@ -16,11 +16,11 @@ public:
     vector<vector<Point>>& generate(const vector<Point> knots) {
         curves.clear();
         
-        vector<vector<Point>> parts = divvy_knots(knots);
+        auto parts = divvy_knots(knots);
         for (auto &part : parts) {
             vector<Point> curve;
             
-            vector<float> t_int = generate_ints(part, parameterization);
+            auto t_int = generate_ints(part, parameterization);
             
             float step = (t_int[degree] / (float)degree) * fidelity;
             for (float t = t_int[0]; t <= t_int[degree]; t += step)

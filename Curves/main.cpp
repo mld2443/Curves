@@ -14,12 +14,13 @@
 int mouseX = -1, mouseY = -1;
 bool mouseLeftDown = false, mouseRightDown = false, mouseMiddleDown = false;
 
-bool editmode = true, drawcurve = false, drawpoly = false;
+bool editmode = true, drawcurve = false, drawpoly = false, intersect = false;
 Point* movepoint;
 
 using namespace std;
 
 vector<Point> knots;
+vector<Point> intersections;
 vector<vector<Point>> crvs;
 curve* cgen;
 
@@ -42,17 +43,25 @@ void display(void) {
         // the actual curve
         crvs = cgen->generate(knots);
         glColor3f(0.0, 0.0, 0.0);
-        for (vector<vector<Point>>::iterator crv = crvs.begin(); crv != crvs.end(); crv++) {
+        for (auto &crv : crvs) {
             glBegin(GL_LINE_STRIP);
-            for (vector<Point>::iterator pt = crv->begin(); pt != crv->end(); pt++)
-                glVertex2d(pt->x, pt->y);
+            for (auto &pt : crv)
+                glVertex2d(pt.x, pt.y);
             glEnd();
         }
     }
     
+    // draw intersection points
+    if (intersect) {
+        for (auto &pt : intersections)
+            pt.draw(1, 0, 0);
+        intersections.clear();
+        intersect = false;
+    }
+    
     // draw the control points
-    for(vector<Point>::iterator it = knots.begin(); it != knots.end(); it++)
-        it->draw(1, 0, 0);
+    for(auto &knot : knots)
+        knot.draw(0, 0, 1);
     
     glFlush();
     glutSwapBuffers();
@@ -88,9 +97,9 @@ void mouse(int button, int state, int x, int y) {
                 glutPostRedisplay();
             }
             else if (mouseLeftDown) {
-                for (vector<Point>::iterator it = knots.begin(); it != knots.end(); it++) {
-                    if (it->clicked(x, y))
-                        movepoint = &(*it);
+                for (auto &knot : knots) {
+                    if (knot.clicked(x, y))
+                        movepoint = &(knot);
                 }
             }
             else {
@@ -237,6 +246,15 @@ void key(unsigned char c, int x, int y) {
             if (drawcurve) {
                 cgen->degree_dec();
                 printf("decrease degree to %u\n", cgen->get_degree());
+                glutPostRedisplay();
+            }
+            break;
+            
+        case 'i':
+            if (drawcurve) {
+                intersections = cgen->find_intersections();
+                intersect = true;
+                printf("calculated intersections: %lu\n", intersections.size());
                 glutPostRedisplay();
             }
             break;

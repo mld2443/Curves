@@ -28,12 +28,6 @@ public:
         return curves;
     }
     
-    vector<Point> find_intersections(void) {
-        vector<Point> results = vector<Point>();
-        //TODO: intersections
-        return results;
-    }
-    
     vector<Point> elevate_degree(const vector<Point>& cpts) {
         vector<Point> newpts;
         
@@ -49,11 +43,56 @@ public:
         return newpts;
     }
     
+    vector<Point> find_intersections(void) {
+        vector<Point> results;
+        vector<pair<pair<Point, Point>, vector<Point>*>> boxes;
+        
+        // create a list of all the curves' bounding boxes, with references to the
+        // curves for further searching
+        for (auto &curve : curves) {
+            boxes.push_back(pair<pair<Point, Point>, vector<Point>*>(bounding_box(curve),&curve));
+        }
+        
+        // compare all curves to all others
+        for (auto left = boxes.begin(); left != boxes.end(); left++) {
+            for (auto right = left + 1; right != boxes.end(); right++) {
+                // if they overlap at all, investigate
+                if (overlap(left->first, right->first)) {
+                    auto pts = intersect_search(*(left->second), *(right->second));
+                    
+                    // if investigation finds points, add them
+                    if (pts.size())
+                        results.insert(results.end(), pts.begin(), pts.end());
+                }
+            }
+        }
+        
+        return results;
+    }
+    
 private:
-    pair<Point, Point> bounding_box(const vector<Point> c) {
-        pair<Point, Point> box = pair<Point, Point>();
-        //TODO: compute bounding box
-        return box;
+    static vector<Point> intersect_search(const vector<Point>& left, const vector<Point>& right) {
+        vector<Point> intersections;
+        // actual subdivision
+        return intersections;
+    }
+    
+    static bool overlap(const pair<Point, Point>& crvA, const pair<Point, Point>& crvB) {
+        if (crvA.first.x < crvB.second.x && crvA.second.x > crvB.first.x &&
+            crvA.first.y < crvB.second.y && crvA.second.y > crvB.first.y)
+            return true;
+        return false;
+    }
+    
+    static pair<Point, Point> bounding_box(const vector<Point> curve) {
+        float minx = curve[0].x, maxx = curve[0].x, miny = curve[0].y, maxy = curve[0].y;
+        for (auto &pt : curve) {
+            if (pt.x < minx) minx = pt.x;
+            else if (pt.x > maxx) maxx = pt.x;
+            if (pt.y < miny) miny = pt.y;
+            else if (pt.y < maxy) maxy = pt.y;
+        }
+        return pair<Point, Point>(Point(minx, miny), Point(maxx, maxy));
     }
 };
 
