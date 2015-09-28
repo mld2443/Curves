@@ -13,20 +13,21 @@ public:
         curves = vector<vector<Point>>();
     }
     
-    vector<vector<Point>>& generate(const vector<Point> cpts) {
+    vector<vector<Point>>& generate(const vector<Point> knots) {
         curves.clear();
         
-        for (unsigned int segment = 0; segment + degree < cpts.size(); segment += (degree + 1)) {
-            vector<Point> curve, segment_cpts = vector<Point>(cpts.begin() + segment, cpts.begin() + segment + degree + 1);
+        vector<vector<Point>> parts = divvy_knots(knots);
+        for (auto &part : parts) {
+            vector<Point> curve;
             
-            vector<float> t_int = generate_ints(segment_cpts, parameterization);
+            vector<float> t_int = generate_ints(part, parameterization);
             
             float step = (t_int[degree] / (float)degree) * fidelity;
-            for (float t = t_int[0]; t <= t_int[degree]; t += step) {
-                curve.push_back(interpolate(degree, 0, segment_cpts, t_int, t));
-            }
-            curve.push_back(segment_cpts.back());
+            for (float t = t_int[0]; t <= t_int[degree]; t += step)
+                curve.push_back(interpolate(part, t_int, t));
             
+            // force last endpoint interpolation
+            curve.push_back(part.back());
             curves.push_back(curve);
         }
         return curves;

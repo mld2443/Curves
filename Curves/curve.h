@@ -10,8 +10,9 @@ using namespace std;
 
 class curve {
 public:
-    virtual vector<vector<Point>>& generate(const vector<Point> cpts)=0;
-    virtual vector<Point> find_intersections(void) { return vector<Point>(); }
+    virtual vector<vector<Point>>& generate(const vector<Point> knots)=0;
+    virtual vector<Point> find_intersections(void) const { return vector<Point>(); };
+    virtual vector<Point> elevate_degree(const vector<Point>& cpts) { return cpts; };
     
     void degree_inc() { degree++; };
     void degree_dec() { if (degree - 1) degree--; };
@@ -25,20 +26,36 @@ public:
 private:
     map<pair<unsigned int, unsigned int>,Point> hash;
 
-    Point nevilles(const unsigned int d, const unsigned int begin, const vector<Point> cp, const vector<float> t_int, const float t) {
+    Point nevilles(const unsigned int d, const unsigned int begin, const vector<Point>& control_points, const vector<float>& t_int, const float t) {
+        // base case are the control points
+        if (d == 0)
+            return control_points[begin];
+        
+        // check if this bit has been calculated before
+        map<pair<unsigned int, unsigned int>,Point>::iterator ii = hash.find(pair<unsigned int, unsigned int>(d, begin));
+        
+        // if it has, don't recalculate it!
+        if (ii != hash.end())
+            return ii->second;
+        
+        // otherwise, yeah go ahead and calculate it
+        return hash[pair<unsigned int, unsigned int>(d, begin)] =                               \
+                ((nevilles(d - 1, begin, control_points, t_int, t) * (t_int[begin + d] - t))  + \
+                 (nevilles(d - 1, begin + 1, control_points, t_int, t) * (t - t_int[begin]))) / \
+                 (t_int[begin + d] - t_int[begin]);
+    }
+    
+    Point bezier_pyramid(unsigned int d, unsigned int begin, const vector<Point>& cp, const float t) {
         if (d == 0)
             return cp[begin];
         
-        map<pair<unsigned int, unsigned int>,Point>::iterator ii;
-        ii = hash.find(pair<unsigned int, unsigned int>(d, begin));
+        map<pair<unsigned int, unsigned int>,Point>::iterator ii = hash.find(pair<unsigned int, unsigned int>(d, begin));
         
         if (ii != hash.end())
             return ii->second;
         
         return hash[pair<unsigned int, unsigned int>(d, begin)] = \
-                ((nevilles(d - 1, begin, cp, t_int, t) * (t_int[begin + d] - t)) +   \
-                 (nevilles(d - 1, begin + 1, cp, t_int, t) * (t - t_int[begin]))) /  \
-                (t_int[begin + d] - t_int[begin]);
+            (bezier_pyramid(d - 1, begin, cp, t) * (1.0 - t)) + (bezier_pyramid(d - 1, begin + 1, cp, t) * t);
     }
 
 protected:
@@ -47,20 +64,41 @@ protected:
     float fidelity;
     float parameterization;
     
-    Point interpolate(const unsigned int d, const unsigned int begin, const vector<Point> cp, const vector<float> t_int, const float t) {
+    // used by some curve types to generate the intervals between knots
+    vector<float> generate_ints(const vector<Point>& knots, const float parameterization) {
+        vector<float> intervals;
+        intervals.push_back(0.0);
+        for (int i = 0; i < degree; i++)
+            intervals.push_back(intervals.back() + pow((knots[i] - knots[i + 1]).abs(), parameterization));
+        return intervals;
+    }
+    
+    vector<vector<Point>> divvy_knots(const vector<Point> knots) const {
+        vector<vector<Point>> parts;
+        
+        for (unsigned int segment = 0; segment + degree < knots.size(); segment += (degree + 1))
+            parts.push_back(vector<Point>(knots.begin() + segment, knots.begin() + segment + degree + 1));
+
+        return parts;
+    }
+    
+    // wrapper function for nevilles algorithm, needed to clear
+    // the hash so there are no erronious recalls
+    Point interpolate(const vector<Point>& control_points, const vector<float>& t_int, const float t) {
         hash = map<pair<unsigned int, unsigned int>,Point>();
-        Point p = nevilles(d, begin, cp, t_int, t);
+        Point p = nevilles(degree, 0, control_points, t_int, t);
         hash.clear();
         return p;
     }
     
-    vector<float> generate_ints(const vector<Point>& cpts, const float parameterization) {
-        vector<float> ints;
-        ints.push_back(0.0);
-        for (int i = 0; i < degree; i++)
-            ints.push_back(ints.back() + pow((cpts[i] - cpts[i + 1]).abs(), parameterization));
-        return ints;
+    // same for bezier curves
+    Point bezier_pyramid(const vector<Point>& control_points, const float t) {
+        hash = map<pair<unsigned int, unsigned int>,Point>();
+        Point p = bezier_pyramid(degree, 0, control_points, t);
+        hash.clear();
+        return p;
     }
+    
 };
 
 #endif /* curve_h */

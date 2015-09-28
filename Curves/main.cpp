@@ -28,6 +28,7 @@ void display(void) {
     
     // draw the curves
     if (drawcurve) {
+        // draw the polylines for control "polygon"
         if (drawpoly) {
             glColor3f(0.8, 0.8, 0.8);
             for (int i = 0; i + cgen->get_degree() < knots.size(); i += cgen->get_degree() + 1){
@@ -37,6 +38,8 @@ void display(void) {
                 glEnd();
             }
         }
+        
+        // the actual curve
         crvs = cgen->generate(knots);
         glColor3f(0.0, 0.0, 0.0);
         for (vector<vector<Point>>::iterator crv = crvs.begin(); crv != crvs.end(); crv++) {
@@ -158,7 +161,7 @@ void key(unsigned char c, int x, int y) {
                 cgen = new bezier();
                 
                 printf("Bezier curve, degree %u\n", cgen->get_degree());
-                //glutPostRedisplay();
+                glutPostRedisplay();
             }
             break;
             
@@ -234,6 +237,14 @@ void key(unsigned char c, int x, int y) {
             if (drawcurve) {
                 cgen->degree_dec();
                 printf("decrease degree to %u\n", cgen->get_degree());
+                glutPostRedisplay();
+            }
+            break;
+            
+        case 'o':
+            if (drawcurve) {
+                knots = cgen->elevate_degree(knots);
+                printf("elevated degree of curve(s) to %u", cgen->get_degree());
                 glutPostRedisplay();
             }
             break;

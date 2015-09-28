@@ -13,7 +13,7 @@ public:
         curves = vector<vector<Point>>();
     }
     
-    vector<vector<Point>>& generate(const vector<Point> cpts) {
+    vector<vector<Point>>& generate(const vector<Point> knots) {
         //TODO: all of this
         return curves;
     }
