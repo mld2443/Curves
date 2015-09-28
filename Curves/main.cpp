@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <iostream>
 #include "lagrange.h"
 #include "bezier.h"
 #include "bspline.h"
@@ -16,14 +17,11 @@ bool mouseLeftDown = false, mouseRightDown = false, mouseMiddleDown = false;
 bool editmode = true, drawcurve = false;
 Point* movepoint;
 
-curve* cgen;
-//int degree = 1;
-
 using namespace std;
 
 vector<Point> cpts;
 vector<vector<Point>> crvs;
-
+curve* cgen;
 
 void display(void) {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -31,7 +29,7 @@ void display(void) {
     // draw the curves
     if (drawcurve) {
         crvs = cgen->generate(cpts);
-        glColor3f(1.0, 0.0, 0.0);
+        glColor3f(0.0, 0.0, 0.0);
         for (vector<vector<Point>>::iterator crv = crvs.begin(); crv != crvs.end(); crv++) {
             glBegin(GL_LINE_STRIP);
             for (vector<Point>::iterator pt = crv->begin(); pt != crv->end(); pt++)
@@ -207,8 +205,10 @@ void key(unsigned char c, int x, int y) {
             
         case '0':
             if (drawcurve) {
-                cgen->set_unusual_param();
-                printf("Set unusual parameterization, a = 2.0\n");
+                printf("Set unusual parameterization, a = ");
+                float param;
+                cin >> param;
+                cgen->set_unusual_param(param);
                 glutPostRedisplay();
             }
             break;

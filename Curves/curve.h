@@ -20,7 +20,7 @@ public:
     void set_uniform_param() { parameterization = 0.0; };
     void set_centrip_param() { parameterization = 0.5; };
     void set_chordlen_param(){ parameterization = 1.0; };
-    void set_unusual_param() { parameterization = 2.0; };
+    void set_unusual_param(const float param) { parameterization = param; };
     
 private:
     map<pair<unsigned int, unsigned int>,Point> hash;
