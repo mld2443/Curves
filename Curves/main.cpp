@@ -14,12 +14,12 @@
 int mouseX = -1, mouseY = -1;
 bool mouseLeftDown = false, mouseRightDown = false, mouseMiddleDown = false;
 
-bool editmode = true, drawcurve = false;
+bool editmode = true, drawcurve = false, drawpoly = false;
 Point* movepoint;
 
 using namespace std;
 
-vector<Point> cpts;
+vector<Point> knots;
 vector<vector<Point>> crvs;
 curve* cgen;
 
@@ -28,7 +28,16 @@ void display(void) {
     
     // draw the curves
     if (drawcurve) {
-        crvs = cgen->generate(cpts);
+        if (drawpoly) {
+            glColor3f(0.8, 0.8, 0.8);
+            for (int i = 0; i + cgen->get_degree() < knots.size(); i += cgen->get_degree() + 1){
+                glBegin(GL_LINE_STRIP);
+                for(int j = i; j <= i + cgen->get_degree(); j++)
+                    glVertex2d(knots[j].x, knots[j].y);
+                glEnd();
+            }
+        }
+        crvs = cgen->generate(knots);
         glColor3f(0.0, 0.0, 0.0);
         for (vector<vector<Point>>::iterator crv = crvs.begin(); crv != crvs.end(); crv++) {
             glBegin(GL_LINE_STRIP);
@@ -39,8 +48,8 @@ void display(void) {
     }
     
     // draw the control points
-    for(vector<Point>::iterator it = cpts.begin(); it != cpts.end(); it++)
-        it->draw(0, 0, 1);
+    for(vector<Point>::iterator it = knots.begin(); it != knots.end(); it++)
+        it->draw(1, 0, 0);
     
     glFlush();
     glutSwapBuffers();
@@ -72,11 +81,11 @@ void mouse(int button, int state, int x, int y) {
         case GLUT_LEFT_BUTTON:
             mouseLeftDown = state == GLUT_DOWN;
             if(editmode && mouseLeftDown) {
-                cpts.push_back(Point(x, y));
+                knots.push_back(Point(x, y));
                 glutPostRedisplay();
             }
             else if (mouseLeftDown) {
-                for (vector<Point>::iterator it = cpts.begin(); it != cpts.end(); it++) {
+                for (vector<Point>::iterator it = knots.begin(); it != knots.end(); it++) {
                     if (it->clicked(x, y))
                         movepoint = &(*it);
                 }
@@ -225,6 +234,19 @@ void key(unsigned char c, int x, int y) {
             if (drawcurve) {
                 cgen->degree_dec();
                 printf("decrease degree to %u\n", cgen->get_degree());
+                glutPostRedisplay();
+            }
+            break;
+            
+        case 'p':
+            if (drawcurve) {
+                drawpoly = !drawpoly;
+                
+                if (drawpoly)
+                    printf("draw polylines\n");
+                else
+                    printf("hide polylines\n");
+                
                 glutPostRedisplay();
             }
             break;
