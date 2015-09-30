@@ -46,7 +46,7 @@ private:
                 (knots[begin + d] - knots[begin]);
     }
     
-    Point decasteljau(unsigned int d, unsigned int begin, const vector<Point>& c_points, const float t) {
+    Point decasteljau(const unsigned int d, const unsigned int begin, const vector<Point>& c_points, const float t) {
         if (d == 0)
             return c_points[begin];
         
@@ -59,7 +59,7 @@ private:
         return hash[p] = (decasteljau(d - 1, begin, c_points, t) * (1.0 - t)) + (decasteljau(d - 1, begin + 1, c_points, t) * t);
     }
     
-    Point deboor(unsigned int d, unsigned int begin, const vector<Point>& c_points, const float t) {
+    Point deboor(const unsigned int d, const unsigned int begin, const vector<Point>& c_points, const float t) {
         if (d == 0)
             return c_points[begin];
         
@@ -71,9 +71,28 @@ private:
         
         // return (left * (begin + degree - t) + right * (t - (d - 1 )) / d
         return hash[p] = ((deboor(d - 1, begin, c_points, t) * (begin + degree - t)) + \
-                          (deboor(d - 1, begin + 1, c_points, t) * (t - (d + begin - 1)))) / d;;
+                          (deboor(d - 1, begin + 1, c_points, t) * (t - (d + begin - 1)))) / d;
     }
-
+    
+    Point cm_deboor(const unsigned int d, const unsigned int begin, const vector<Point>& c_points, const vector<float>& knots, const float t) {
+        auto p = pair<unsigned int, unsigned int>(d + degree, begin);
+        auto ii = hash.find(p);
+        
+        if (ii != hash.end())
+            return ii->second;
+        
+        if (d == 1)
+            return hash[p] = \
+                ((neville(degree - 1, begin, c_points, knots, t) * (knots[begin + degree] - t)) +    \
+                (neville(degree - 1, begin + 1, c_points, knots, t) * (t - knots[d + begin - 1]))) / \
+                (knots[begin + degree] - knots[d + begin - 1]);
+        
+        return hash[p] = \
+                ((cm_deboor(d - 1, begin, c_points, knots, t) * (knots[begin + degree] - t)) +       \
+                (cm_deboor(d - 1, begin + 1, c_points, knots, t) * (t - knots[d + begin - 1]))) /    \
+                (knots[begin + degree] - knots[d + begin - 1]);
+    }
+    
 protected:
     vector<vector<Point>> curves;
     unsigned int degree;
@@ -81,12 +100,12 @@ protected:
     float parameterization;
     
     // used by some curve types to generate the intervals between knots
-    vector<float> generate_ints(const vector<Point>& knots, const float parameterization) {
-        vector<float> intervals;
-        intervals.push_back(0.0);
-        for (int i = 0; i < degree; i++)
-            intervals.push_back(intervals.back() + pow((knots[i] - knots[i + 1]).abs(), parameterization));
-        return intervals;
+    static vector<float> generate_ints(const vector<Point>& c_points, const unsigned int size, const float parameterization) {
+        vector<float> knots;
+        knots.push_back(0.0);
+        for (unsigned int i = 0; i < size; i++)
+            knots.push_back(knots.back() + pow((c_points[i] - c_points[i + 1]).abs(), parameterization));
+        return knots;
     }
     
     // groups up the control points for each bezier and lagrange curve
@@ -123,6 +142,15 @@ protected:
         hash.clear();
         return p;
     }
+    
+    // and lastly catmull-rom curves
+    Point cm_deboor(const vector<Point>& c_points, const vector<float>& knots, const unsigned int piece, const float t) {
+        hash = map<pair<unsigned int, unsigned int>,Point>();
+        auto p = cm_deboor(degree, piece, c_points, knots, t);
+        hash.clear();
+        return p;
+    }
+    
 };
 
 #endif /* curve_h */

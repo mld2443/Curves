@@ -20,7 +20,7 @@ public:
         for (auto &part : parts) {
             vector<Point> curve;
             
-            auto t_int = generate_ints(part, parameterization);
+            auto t_int = generate_ints(part, degree, parameterization);
             
             float step = (t_int[degree] / (float)degree) * fidelity;
             for (float t = t_int[0]; t <= t_int[degree]; t += step)

@@ -208,7 +208,7 @@ void key(unsigned char c, int x, int y) {
                 cgen = new catmullrom();
                 
                 printf("Catmull-Rom curve, smoothness %u\n", cgen->get_degree());
-                //glutPostRedisplay();
+                glutPostRedisplay();
             }
             break;
             
