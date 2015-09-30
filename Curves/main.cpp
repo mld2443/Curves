@@ -5,70 +5,62 @@
 #include <stdlib.h>
 #include <math.h>
 #include <iostream>
+#include <fstream>
 #include "lagrange.h"
 #include "bezier.h"
 #include "bspline.h"
 #include "catmullrom.h"
 #include <vector>
+#include <list>
 
 int mouseX = -1, mouseY = -1;
 bool mouseLeftDown = false, mouseRightDown = false, mouseMiddleDown = false;
 
-bool editmode = true, drawcurve = false, drawpoly = false, grouppoly = true, intersect = false;
-Point* movepoint;
+bool drawpoly = false, selected_point = false;
+unsigned int point_selection;
+curve *selected_curve, *moving;
 
 using namespace std;
 
-vector<Point> c_points;
-vector<Point> intersections;
-vector<vector<Point>> crvs;
-curve* cgen;
+vector<Point> new_points;
+list<curve*> curves;
 
 void display(void) {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     
     // draw the curves
-    if (drawcurve) {
-        // draw the polylines for control "polygon"
+    for (auto &crv : curves){
+        vector<Point> control_points = crv->get_c_points();
         if (drawpoly) {
             glColor3f(0.8, 0.8, 0.8);
-            if (grouppoly) {
-                for (int i = 0; i + cgen->get_degree() < c_points.size(); i += cgen->get_degree() + 1){
-                    glBegin(GL_LINE_STRIP);
-                    for(int j = i; j <= i + cgen->get_degree(); j++)
-                        glVertex2d(c_points[j].x, c_points[j].y);
-                    glEnd();
-                }
-            }
-            else {
-                glBegin(GL_LINE_STRIP);
-                for (auto &p : c_points)
-                    glVertex2d(p.x, p.y);
-                glEnd();
-            }
-        }
-        
-        // the actual curve
-        crvs = cgen->generate(c_points);
-        glColor3f(0.0, 0.0, 0.0);
-        for (auto &crv : crvs) {
             glBegin(GL_LINE_STRIP);
-            for (auto &pt : crv)
-                glVertex2d(pt.x, pt.y);
+            for (auto &p : control_points)
+                glVertex2d(p.x, p.y);
             glEnd();
         }
-    }
-    
-    // draw intersection points
-    if (intersect) {
-        for (auto &pt : intersections)
-            pt.draw(1, 0, 0);
-        intersections.clear();
-        intersect = false;
+        
+        vector<Point> curve = crv->get_curve();
+        
+        if (crv == selected_curve)
+            glColor3f(0.5, 0.0, 0.0);
+        else
+            glColor3f(0.0, 0.0, 0.0);
+        
+        glBegin(GL_LINE_STRIP);
+        for (auto &pt : curve)
+            glVertex2d(pt.x, pt.y);
+        glEnd();
+        
+        for(auto &pt : control_points)
+            pt.draw(0, 0, 1);
+        
+        if (crv == selected_curve && selected_point) {
+            control_points[point_selection].draw(1, 0, 0);
+        }
     }
     
     // draw the control points
-    for(auto &knot : c_points)
+    for(auto &knot : new_points)
         knot.draw(0, 0, 1);
     
     glFlush();
@@ -91,8 +83,6 @@ void init(void) {
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    
-    movepoint = nullptr;
 }
 
 void mouse(int button, int state, int x, int y) {
@@ -100,26 +90,51 @@ void mouse(int button, int state, int x, int y) {
     {
         case GLUT_LEFT_BUTTON:
             mouseLeftDown = state == GLUT_DOWN;
-            if(editmode && mouseLeftDown) {
-                c_points.push_back(Point(x, y));
-                glutPostRedisplay();
-            }
-            else if (mouseLeftDown) {
-                for (auto &p : c_points) {
-                    if (p.clicked(x, y))
-                        movepoint = &(p);
+            selected_point = false;
+            moving = nullptr;
+            if(mouseLeftDown) {
+                for (int p = 0; p < new_points.size(); p++) {
+                    if (new_points[p].clicked(x, y)) {
+                        point_selection = p;
+                        selected_point = true;
+                    }
                 }
+                if (!selected_point) {
+                    for (auto &crv : curves) {
+                        vector<Point> c_points = crv->get_c_points();
+                        for (int p = 0; p < c_points.size(); p++) {
+                            if (c_points[p].clicked(x, y)) {
+                                point_selection = p;
+                                selected_point = true;
+                                moving = crv;
+                            }
+                        }
+                    }
+                }
+                
+                if (!selected_point)
+                    new_points.push_back(Point(x, y));
+                
             }
-            else {
-                movepoint = nullptr;
-                glutPostRedisplay();
-            }
+            glutPostRedisplay();
             break;
         case GLUT_MIDDLE_BUTTON:
             mouseMiddleDown = state == GLUT_DOWN;
             break;
         case GLUT_RIGHT_BUTTON:
             mouseRightDown = state == GLUT_DOWN;
+            if (mouseRightDown) {
+                selected_curve = nullptr;
+                for (auto &crv : curves) {
+                    vector<Point> c_points = crv->get_c_points();
+                    for (auto &pt : c_points) {
+                        if (pt.clicked(x, y))
+                            selected_curve = crv;
+                    }
+                }
+            }
+            
+            glutPostRedisplay();
             break;
     }
     mouseX = x;
@@ -131,8 +146,12 @@ void motion(int x, int y) {
     dx = x - mouseX;
     dy = y - mouseY;
     
-    if (!editmode && movepoint != nullptr) {
-        movepoint->diff(dx, dy);
+    if (selected_point) {
+        if (moving)
+            moving->move_point(point_selection, dx, dy);
+        else
+            new_points[point_selection].diff(dx, dy);
+        
         glutPostRedisplay();
     }
     
@@ -148,148 +167,221 @@ void reshape(int w, int h) {
     glMatrixMode(GL_MODELVIEW);
 }
 
+void save_file() {
+    string filename;
+    printf("save file: ");
+    cin >> filename;
+    ofstream file;
+    file.open(filename);
+    file << curves.size() << endl;
+    for (auto &crv : curves) {
+        file << crv->get_type() << endl;
+        file << crv->get_degree() << ' ' << crv->get_fidelity() << ' ' \
+            << crv->get_param() << ' ' << crv->get_c_points().size() << endl;
+        for (auto & pt : crv->get_c_points())
+            file << pt.x << ' ' << pt.y << endl;
+    }
+    file.close();
+}
+
+void load_file() {
+    string filename;
+    printf("load file: ");
+    cin >> filename;
+    ifstream file;
+    file.open(filename);
+    curves.clear();
+    unsigned int num_curves;
+    file >> num_curves;
+    for (unsigned int i = 0; i < num_curves; i++) {
+        int type;
+        file >> type;
+        
+        unsigned int degree, size;
+        float fidel, param;
+        file >> degree >> fidel >> param >> size;
+        
+        curve *crv;
+        switch (type) {
+            case curve::lagrange:
+                crv = new lagrange(degree, fidel, param);
+                break;
+            case curve::bezier:
+                crv = new bezier(degree, fidel, param);
+                break;
+            case curve::bspline:
+                crv = new bspline(degree, fidel, param);
+                break;
+            case curve::catmullrom:
+                crv = new catmullrom(degree, fidel, param);
+                break;
+                
+            default:
+                printf("file error: invalid type\n");
+                break;
+        }
+        
+        vector<Point> c_points;
+        for (int j = 0; j < size; j++) {
+            float x,y;
+            file >> x >> y;
+            c_points.push_back(Point(x, y));
+        }
+        crv->generate(c_points);
+        curves.push_back(crv);
+    }
+    file.close();
+}
+
 void key(unsigned char c, int x, int y) {
     switch (c) {
-        case 'e':
-            editmode = false;
-            drawcurve = false;
-            printf("display mode\n");
-            break;
-            
         case '1':
-            if (!editmode) {
-                drawcurve = true;
-                grouppoly = true;
+            if (new_points.size() > 1) {
+                curves.push_back(new lagrange(new_points.size() - 1));
+                curves.back()->generate(new_points);
+                new_points.clear();
                 
-                if (cgen != nullptr)
-                    free(cgen);
-                cgen = new lagrange();
-                
-                printf("LaGrange curve, degree %u\n", cgen->get_degree());
+                printf("LaGrange curve, degree %lu\n", new_points.size() - 1);
                 glutPostRedisplay();
             }
             break;
             
         case '2':
-            if (!editmode) {
-                drawcurve = true;
-                grouppoly = true;
+            if (new_points.size() > 1) {
+                curves.push_back(new bezier(new_points.size() - 1));
+                curves.back()->generate(new_points);
+                new_points.clear();
                 
-                if (cgen != nullptr)
-                    free(cgen);
-                cgen = new bezier();
-                
-                printf("Bezier curve, degree %u\n", cgen->get_degree());
+                printf("Bezier curve, degree %lu\n", new_points.size() - 1);
                 glutPostRedisplay();
             }
             break;
             
         case '3':
-            if (!editmode) {
-                drawcurve = true;
-                grouppoly = false;
+            if (new_points.size() > 1) {
+                curves.push_back(new bspline(1));
+                curves.back()->generate(new_points);
+                new_points.clear();
                 
-                if (cgen != nullptr)
-                    free(cgen);
-                cgen = new bspline();
-                
-                printf("B-spline curve, degree %u\n", cgen->get_degree());
+                printf("B-spline curve, degree %lu\n", new_points.size() - 1);
                 glutPostRedisplay();
-           }
+            }
             break;
             
         case '4':
-            if (!editmode) {
-                drawcurve = true;
-                grouppoly = false;
+            if (new_points.size() > 1) {
+                curves.push_back(new catmullrom(1));
+                curves.back()->generate(new_points);
+                new_points.clear();
                 
-                if (cgen != nullptr)
-                    free(cgen);
-                cgen = new catmullrom();
-                
-                printf("Catmull-Rom curve, smoothness %u\n", cgen->get_degree());
+                printf("Catmull-Rom curve, degree %lu\n", new_points.size() - 1);
                 glutPostRedisplay();
             }
             break;
             
         case '7':
-            if (drawcurve) {
-                cgen->set_uniform_param();
+            if (selected_curve) {
+                selected_curve->set_uniform_param();
                 printf("Set uniform parameterization, a = 0.0\n");
+                selected_curve->generate();
                 glutPostRedisplay();
             }
             break;
             
         case '8':
-            if (drawcurve) {
-                cgen->set_centrip_param();
+            if (selected_curve) {
+                selected_curve->set_centrip_param();
                 printf("Set centripital parameterization, a = 0.5\n");
+                selected_curve->generate();
                 glutPostRedisplay();
             }
             break;
             
         case '9':
-            if (drawcurve) {
-                cgen->set_chordlen_param();
+            if (selected_curve) {
+                selected_curve->set_chordlen_param();
                 printf("Set chord length parameterization, a = 1.0\n");
+                selected_curve->generate();
                 glutPostRedisplay();
             }
             break;
             
         case '0':
-            if (drawcurve) {
+            if (selected_curve) {
                 printf("Set unusual parameterization, a = ");
                 float param;
                 cin >> param;
-                cgen->set_unusual_param(param);
+                selected_curve->set_unusual_param(param);
+                selected_curve->generate();
                 glutPostRedisplay();
             }
             break;
             
         case '=':
-            if (drawcurve) {
-                cgen->degree_inc();
-                printf("increase degree to %u\n", cgen->get_degree());
-                glutPostRedisplay();
-           }
-            break;
-            
-        case '-':
-            if (drawcurve) {
-                cgen->degree_dec();
-                printf("decrease degree to %u\n", cgen->get_degree());
-                glutPostRedisplay();
+            if (selected_curve) {
+                if (selected_curve->get_type() > curve::bezier) {
+                    selected_curve->degree_inc();
+                    selected_curve->generate();
+                    printf("increase degree to %u\n", selected_curve->get_degree());
+                    glutPostRedisplay();
+                }
             }
             break;
             
-        case 'i':
-            if (drawcurve) {
-                intersections = cgen->find_intersections();
-                intersect = true;
-                printf("calculated intersections: %lu\n", intersections.size());
-                glutPostRedisplay();
+        case '-':
+            if (selected_curve) {
+                if (selected_curve->get_type() > curve::bezier) {
+                    selected_curve->degree_dec();
+                    selected_curve->generate();
+                    printf("decrease degree to %u\n", selected_curve->get_degree());
+                    glutPostRedisplay();
+                }
             }
             break;
             
         case 'o':
-            if (drawcurve) {
-                c_points = cgen->elevate_degree(c_points);
-                printf("elevated degree of curve(s) to %u\n", cgen->get_degree());
+            if (curves.size())
+                save_file();
+            break;
+            
+        case 'l':
+            load_file();
+            glutPostRedisplay();
+            break;
+            
+        case '\\':
+            if (selected_curve) {
+                auto it = curves.begin();
+                for (; *it != selected_curve && it != curves.end(); it++);
+                if (it == curves.end())
+                    printf("Panic");
+                curves.erase(it);
+                delete selected_curve;
+                selected_curve = nullptr;
+            }
+            else if (new_points.size())
+                new_points.pop_back();
+            glutPostRedisplay();
+            break;
+            
+        case '[':
+            if (selected_curve && selected_curve->get_type() == curve::bezier) {
+                selected_curve->elevate_degree();
+                selected_curve->generate();
+                printf("elevated degree of curve(s) to %u\n", selected_curve->get_degree());
                 glutPostRedisplay();
             }
             break;
             
         case 'p':
-            if (drawcurve) {
-                drawpoly = !drawpoly;
-                
-                if (drawpoly)
-                    printf("draw polylines\n");
-                else
-                    printf("hide polylines\n");
-                
-                glutPostRedisplay();
-            }
+            drawpoly = !drawpoly;
+            
+            if (drawpoly)
+                printf("draw polylines\n");
+            else
+                printf("hide polylines\n");
+            
+            glutPostRedisplay();
             break;
             
         default:

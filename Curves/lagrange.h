@@ -6,31 +6,32 @@
 
 class lagrange : public curve {
 public:
-    lagrange(const int d = 1, const float f = 1.0/100.0) {
+    lagrange(const int d = 1, const float f = 1.0/100.0, const float p = 0.0) {
         degree = d;
         fidelity = f;
-        parameterization = 0.0;
-        curves = vector<vector<Point>>();
+        parameterization = p;
+        curve = vector<Point>();
     }
     
-    vector<vector<Point>>& generate(const vector<Point> knots) {
-        curves.clear();
+    vector<Point>& generate(const vector<Point>& control_points = vector<Point>()) {
+        if (control_points.size())
+            c_points = control_points;
+        curve.clear();
         
-        auto parts = divvy_points(knots);
-        for (auto &part : parts) {
-            vector<Point> curve;
-            
-            auto t_int = generate_ints(part, degree, parameterization);
-            
-            float step = (t_int[degree] / (float)degree) * fidelity;
-            for (float t = t_int[0]; t <= t_int[degree]; t += step)
-                curve.push_back(neville(part, t_int, t));
-            
-            // force last endpoint interpolation
-            curve.push_back(part.back());
-            curves.push_back(curve);
-        }
-        return curves;
+        auto knots = generate_ints(c_points, degree, parameterization);
+        
+        float step = (knots[degree] / (float)degree) * fidelity;
+        for (float t = knots[0]; t <= knots[degree]; t += step)
+            curve.push_back(neville(knots, t));
+        
+        // force last endpoint interpolation
+        curve.push_back(c_points.back());
+        
+        return curve;
+    }
+    
+    curvetype get_type() const {
+        return curvetype::lagrange;
     }
 };
 

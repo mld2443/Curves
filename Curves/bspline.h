@@ -6,24 +6,28 @@
 
 class bspline : public curve {
 public:
-    bspline(const int d = 1, const float f = 1.0/100.0) {
+    bspline(const int d = 1, const float f = 1.0/100.0, const float p = 0.0) {
         degree = d;
         fidelity = f;
-        parameterization = 0.0;
-        curves = vector<vector<Point>>();
+        parameterization = p;
+        curve = vector<Point>();
     }
     
-    vector<vector<Point>>& generate(const vector<Point> c_points) {
-        curves.clear();
-        vector<Point> curve;
+    vector<Point>& generate(const vector<Point>& control_points = vector<Point>()) {
+        if (control_points.size())
+            c_points = control_points;
+        curve.clear();
         
         for (unsigned int piece = 0; piece < c_points.size() - degree; piece++) {
             for (float t = piece + degree - 1; t < piece + degree; t += fidelity)
-                curve.push_back(deboor(c_points, piece, t));
+                curve.push_back(deboor(piece, t));
         }
-        curves.push_back(curve);
         
-        return curves;
+        return curve;
+    }
+    
+    curvetype get_type() const {
+        return curvetype::bspline;
     }
 };
 

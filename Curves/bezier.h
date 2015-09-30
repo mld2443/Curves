@@ -7,45 +7,43 @@
 
 class bezier : public curve {
 public:
-    bezier(const int d = 1, const float f = 1.0/1000.0) {
+    bezier(const int d = 1, const float f = 1.0/1000.0, const float p = 0.0) {
         degree = d;
         fidelity = f;
-        parameterization = 0.0;
-        curves = vector<vector<Point>>();
+        parameterization = p;
+        curve = vector<Point>();
     }
     
-    vector<vector<Point>>& generate(const vector<Point> c_points) {
-        curves.clear();
+    vector<Point>& generate(const vector<Point>& control_points = vector<Point>()) {
+        if (control_points.size())
+            c_points = control_points;
+        curve.clear();
         
-        vector<vector<Point>> parts = divvy_points(c_points);
-        for (auto &part : parts) {
-            vector<Point> curve;
-            
-            for (float t = 0.0; t <= 1.0; t += fidelity)
-                curve.push_back(decasteljau(part, t));
-            
-            curve.push_back(part.back());
-            curves.push_back(curve);
-        }
-        return curves;
+        for (float t = 0.0; t <= 1.0; t += fidelity)
+            curve.push_back(decasteljau(t));
+        
+        curve.push_back(c_points.back());
+        
+        return curve;
     }
     
-    vector<Point> elevate_degree(const vector<Point>& c_points) {
+    void elevate_degree() {
         vector<Point> newpts;
         
-        vector<vector<Point>> parts = divvy_points(c_points);
-        for (auto &part : parts) {
-            newpts.push_back(part.front());
-            for (int i = 1; i < part.size(); i++)
-                newpts.push_back(part[i] * (1 - ((float)i / (float)(degree + 1))) + part[i - 1] * ((float)i / (float)(degree + 1)));
-            newpts.push_back(part.back());
-        }
+        newpts.push_back(c_points.front());
+        for (int i = 1; i < c_points.size(); i++)
+            newpts.push_back(c_points[i] * (1 - ((float)i / (float)(degree + 1))) + c_points[i - 1] * ((float)i / (float)(degree + 1)));
+        newpts.push_back(c_points.back());
         
         degree_inc();
-        return newpts;
+        c_points = newpts;
     }
     
-    vector<Point> find_intersections(void) {
+    curvetype get_type() const {
+        return curvetype::bezier;
+    }
+    
+    /*vector<Point> find_intersections(void) {
         vector<Point> results;
         vector<pair<pair<Point, Point>, vector<Point>*>> boxes;
         
@@ -71,10 +69,10 @@ public:
         }
         
         return results;
-    }
+    }*/
     
 private:
-    static bool straight_enough(const vector<Point>& line) {
+    /*static bool straight_enough(const vector<Point>& line) {
         unsigned long interval = line.size()/6;
         if (interval < 1)
             interval = 1;
@@ -155,7 +153,7 @@ private:
             if (pt.y > maxy) maxy = pt.y;
         }
         return pair<Point, Point>(Point(minx, miny), Point(maxx, maxy));
-    }
+    }*/
 };
 
 #endif /* bezier_h */

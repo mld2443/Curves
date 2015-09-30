@@ -6,30 +6,33 @@
 
 class catmullrom : public curve {
 public:
-    catmullrom(const int s = 1, const float f = 1.0/100.0) {
+    catmullrom(const int s = 1, const float f = 1.0/100.0, const float p = 0.0) {
         degree = s;
         fidelity = f;
-        parameterization = 0.0;
-        curves = vector<vector<Point>>();
+        parameterization = p;
+        curve = vector<Point>();
     }
     
-    vector<vector<Point>>& generate(const vector<Point> c_points) {
-        curves.clear();
-        
-        vector<Point> curve;
+    vector<Point>& generate(const vector<Point>& control_points = vector<Point>()) {
+        if (control_points.size())
+            c_points = control_points;
+        curve.clear();
         
         auto knots = generate_ints(c_points, c_points.size() - 1, parameterization);
         
         float step = (knots[degree] / (float)degree) * fidelity;
-        int justincase = 0;
+        int begin = 0;
         for (unsigned int piece = degree - 1; piece < c_points.size() - degree; piece++) {
             for (float t = knots[piece]; t <= knots[piece + 1]; t += step)
-                curve.push_back(cm_deboor(c_points, knots, justincase, t));
-            justincase++;
+                curve.push_back(cm_deboor(knots, begin, t));
+            begin++;
         }
-        curves.push_back(curve);
         
-        return curves;
+        return curve;
+    }
+    
+    curvetype get_type() const {
+        return curvetype::catmullrom;
     }
 };
 
