@@ -49,6 +49,10 @@ public:
 		y /= s;
 	}
 
+    float angle(const Point& p) const {
+        return acos(dot(p) / (p.abs() * abs()));
+    }
+    
 	float dot(const Point &v) const {
 		return x * v.x + y * v.y;
 	}
@@ -62,7 +66,7 @@ public:
         y += dy;
     }
     
-    float abs(void) {
+    float abs(void) const {
         return sqrt(x * x + y * y);
     }
 

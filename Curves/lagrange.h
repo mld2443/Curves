@@ -16,7 +16,7 @@ public:
     vector<vector<Point>>& generate(const vector<Point> knots) {
         curves.clear();
         
-        auto parts = divvy_knots(knots);
+        auto parts = divvy_points(knots);
         for (auto &part : parts) {
             vector<Point> curve;
             
@@ -24,7 +24,7 @@ public:
             
             float step = (t_int[degree] / (float)degree) * fidelity;
             for (float t = t_int[0]; t <= t_int[degree]; t += step)
-                curve.push_back(interpolate(part, t_int, t));
+                curve.push_back(neville(part, t_int, t));
             
             // force last endpoint interpolation
             curve.push_back(part.back());

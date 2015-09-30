@@ -10,8 +10,8 @@ using namespace std;
 
 class curve {
 public:
-    virtual vector<vector<Point>>& generate(const vector<Point> knots)=0;
-    virtual vector<Point> find_intersections(void) const { return vector<Point>(); };
+    virtual vector<vector<Point>>& generate(const vector<Point> c_points)=0;
+    virtual vector<Point> find_intersections(void) { return vector<Point>(); };
     virtual vector<Point> elevate_degree(const vector<Point>& cpts) { return cpts; };
     
     void degree_inc() { degree++; };
@@ -26,10 +26,10 @@ public:
 private:
     map<pair<unsigned int, unsigned int>,Point> hash;
 
-    Point nevilles(const unsigned int d, const unsigned int begin, const vector<Point>& control_points, const vector<float>& t_int, const float t) {
+    Point neville(const unsigned int d, const unsigned int begin, const vector<Point>& c_points, const vector<float>& knots, const float t) {
         // base case are the control points
         if (d == 0)
-            return control_points[begin];
+            return c_points[begin];
         
         // check if this bit has been calculated before
         auto p = pair<unsigned int, unsigned int>(d, begin);
@@ -41,14 +41,14 @@ private:
         
         // otherwise, yeah go ahead and calculate it
         return hash[p] = \
-                ((nevilles(d - 1, begin, control_points, t_int, t) * (t_int[begin + d] - t))  + \
-                 (nevilles(d - 1, begin + 1, control_points, t_int, t) * (t - t_int[begin]))) / \
-                 (t_int[begin + d] - t_int[begin]);
+                ((neville(d - 1, begin, c_points, knots, t) * (knots[begin + d] - t)) + \
+                (neville(d - 1, begin + 1, c_points, knots, t) * (t - knots[begin]))) / \
+                (knots[begin + d] - knots[begin]);
     }
     
-    Point bezier_pyramid(unsigned int d, unsigned int begin, const vector<Point>& cp, const float t) {
+    Point decasteljau(unsigned int d, unsigned int begin, const vector<Point>& c_points, const float t) {
         if (d == 0)
-            return cp[begin];
+            return c_points[begin];
         
         auto p = pair<unsigned int, unsigned int>(d, begin);
         auto ii = hash.find(p);
@@ -56,7 +56,22 @@ private:
         if (ii != hash.end())
             return ii->second;
         
-        return hash[p] = (bezier_pyramid(d - 1, begin, cp, t) * (1.0 - t)) + (bezier_pyramid(d - 1, begin + 1, cp, t) * t);
+        return hash[p] = (decasteljau(d - 1, begin, c_points, t) * (1.0 - t)) + (decasteljau(d - 1, begin + 1, c_points, t) * t);
+    }
+    
+    Point deboor(unsigned int d, unsigned int begin, const vector<Point>& c_points, const float t) {
+        if (d == 0)
+            return c_points[begin];
+        
+        auto p = pair<unsigned int, unsigned int>(d, begin);
+        auto ii = hash.find(p);
+        
+        if (ii != hash.end())
+            return ii->second;
+        
+        // return (left * (begin + degree - t) + right * (t - (d - 1 )) / d
+        return hash[p] = ((deboor(d - 1, begin, c_points, t) * (begin + degree - t)) + \
+                          (deboor(d - 1, begin + 1, c_points, t) * (t - (d + begin - 1)))) / d;;
     }
 
 protected:
@@ -74,32 +89,40 @@ protected:
         return intervals;
     }
     
-    vector<vector<Point>> divvy_knots(const vector<Point> knots) const {
+    // groups up the control points for each bezier and lagrange curve
+    vector<vector<Point>> divvy_points(const vector<Point> c_points) const {
         vector<vector<Point>> parts;
         
-        for (unsigned int segment = 0; segment + degree < knots.size(); segment += (degree + 1))
-            parts.push_back(vector<Point>(knots.begin() + segment, knots.begin() + segment + degree + 1));
+        for (unsigned int segment = 0; segment + degree < c_points.size(); segment += (degree + 1))
+            parts.push_back(vector<Point>(c_points.begin() + segment, c_points.begin() + segment + degree + 1));
 
         return parts;
     }
     
     // wrapper function for nevilles algorithm, needed to clear
     // the hash so there are no erronious recalls
-    Point interpolate(const vector<Point>& control_points, const vector<float>& t_int, const float t) {
+    Point neville(const vector<Point>& c_points, const vector<float>& knots, const float t) {
         hash = map<pair<unsigned int, unsigned int>,Point>();
-        auto p = nevilles(degree, 0, control_points, t_int, t);
+        auto p = neville(degree, 0, c_points, knots, t);
         hash.clear();
         return p;
     }
     
     // same for bezier curves
-    Point bezier_pyramid(const vector<Point>& control_points, const float t) {
+    Point decasteljau(const vector<Point>& c_points, const float t) {
         hash = map<pair<unsigned int, unsigned int>,Point>();
-        auto p = bezier_pyramid(degree, 0, control_points, t);
+        auto p = decasteljau(degree, 0, c_points, t);
         hash.clear();
         return p;
     }
     
+    // and for b-splines
+    Point deboor(const vector<Point>& c_points, const unsigned int piece, const float t) {
+        hash = map<pair<unsigned int, unsigned int>,Point>();
+        auto p = deboor(degree, piece, c_points, t);
+        hash.clear();
+        return p;
+    }
 };
 
 #endif /* curve_h */

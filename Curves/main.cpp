@@ -14,12 +14,12 @@
 int mouseX = -1, mouseY = -1;
 bool mouseLeftDown = false, mouseRightDown = false, mouseMiddleDown = false;
 
-bool editmode = true, drawcurve = false, drawpoly = false, intersect = false;
+bool editmode = true, drawcurve = false, drawpoly = false, grouppoly = true, intersect = false;
 Point* movepoint;
 
 using namespace std;
 
-vector<Point> knots;
+vector<Point> c_points;
 vector<Point> intersections;
 vector<vector<Point>> crvs;
 curve* cgen;
@@ -32,16 +32,24 @@ void display(void) {
         // draw the polylines for control "polygon"
         if (drawpoly) {
             glColor3f(0.8, 0.8, 0.8);
-            for (int i = 0; i + cgen->get_degree() < knots.size(); i += cgen->get_degree() + 1){
+            if (grouppoly) {
+                for (int i = 0; i + cgen->get_degree() < c_points.size(); i += cgen->get_degree() + 1){
+                    glBegin(GL_LINE_STRIP);
+                    for(int j = i; j <= i + cgen->get_degree(); j++)
+                        glVertex2d(c_points[j].x, c_points[j].y);
+                    glEnd();
+                }
+            }
+            else {
                 glBegin(GL_LINE_STRIP);
-                for(int j = i; j <= i + cgen->get_degree(); j++)
-                    glVertex2d(knots[j].x, knots[j].y);
+                for (auto &p : c_points)
+                    glVertex2d(p.x, p.y);
                 glEnd();
             }
         }
         
         // the actual curve
-        crvs = cgen->generate(knots);
+        crvs = cgen->generate(c_points);
         glColor3f(0.0, 0.0, 0.0);
         for (auto &crv : crvs) {
             glBegin(GL_LINE_STRIP);
@@ -60,7 +68,7 @@ void display(void) {
     }
     
     // draw the control points
-    for(auto &knot : knots)
+    for(auto &knot : c_points)
         knot.draw(0, 0, 1);
     
     glFlush();
@@ -93,13 +101,13 @@ void mouse(int button, int state, int x, int y) {
         case GLUT_LEFT_BUTTON:
             mouseLeftDown = state == GLUT_DOWN;
             if(editmode && mouseLeftDown) {
-                knots.push_back(Point(x, y));
+                c_points.push_back(Point(x, y));
                 glutPostRedisplay();
             }
             else if (mouseLeftDown) {
-                for (auto &knot : knots) {
-                    if (knot.clicked(x, y))
-                        movepoint = &(knot);
+                for (auto &p : c_points) {
+                    if (p.clicked(x, y))
+                        movepoint = &(p);
                 }
             }
             else {
@@ -151,6 +159,7 @@ void key(unsigned char c, int x, int y) {
         case '1':
             if (!editmode) {
                 drawcurve = true;
+                grouppoly = true;
                 
                 if (cgen != nullptr)
                     free(cgen);
@@ -164,6 +173,7 @@ void key(unsigned char c, int x, int y) {
         case '2':
             if (!editmode) {
                 drawcurve = true;
+                grouppoly = true;
                 
                 if (cgen != nullptr)
                     free(cgen);
@@ -177,19 +187,21 @@ void key(unsigned char c, int x, int y) {
         case '3':
             if (!editmode) {
                 drawcurve = true;
+                grouppoly = false;
                 
                 if (cgen != nullptr)
                     free(cgen);
                 cgen = new bspline();
                 
                 printf("B-spline curve, degree %u\n", cgen->get_degree());
-                //glutPostRedisplay();
+                glutPostRedisplay();
            }
             break;
             
         case '4':
             if (!editmode) {
                 drawcurve = true;
+                grouppoly = false;
                 
                 if (cgen != nullptr)
                     free(cgen);
@@ -261,8 +273,8 @@ void key(unsigned char c, int x, int y) {
             
         case 'o':
             if (drawcurve) {
-                knots = cgen->elevate_degree(knots);
-                printf("elevated degree of curve(s) to %u", cgen->get_degree());
+                c_points = cgen->elevate_degree(c_points);
+                printf("elevated degree of curve(s) to %u\n", cgen->get_degree());
                 glutPostRedisplay();
             }
             break;

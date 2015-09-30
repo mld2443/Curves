@@ -13,8 +13,16 @@ public:
         curves = vector<vector<Point>>();
     }
     
-    vector<vector<Point>>& generate(const vector<Point> knots) {
-        //TODO: all of this
+    vector<vector<Point>>& generate(const vector<Point> c_points) {
+        curves.clear();
+        vector<Point> curve;
+        
+        for (unsigned int piece = 0; piece < c_points.size() - degree; piece++) {
+            for (float t = piece + degree - 1; t < piece + degree; t += fidelity)
+                curve.push_back(deboor(c_points, piece, t));
+        }
+        curves.push_back(curve);
+        
         return curves;
     }
 };
