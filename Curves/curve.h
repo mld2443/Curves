@@ -122,16 +122,6 @@ protected:
         return knots;
     }
     
-    // groups up the control points for each bezier and lagrange curve
-    /*vector<vector<Point>> divvy_points(const vector<Point> c_points) const {
-        vector<vector<Point>> parts;
-        
-        for (unsigned int segment = 0; segment + degree < c_points.size(); segment += (degree + 1))
-            parts.push_back(vector<Point>(c_points.begin() + segment, c_points.begin() + segment + degree + 1));
-
-        return parts;
-    }*/
-    
     // wrapper function for nevilles algorithm, needed to clear
     // the hash so there are no erronious recalls
     Point neville(const vector<float>& knots, const float t) {
